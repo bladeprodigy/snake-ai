@@ -1,38 +1,33 @@
+import multiprocessing
 import os
 import neat
-
 from snake_game import SnakeGame
 
 
-def eval_genomes(genomes, config):
-    for genome_id, genome in genomes:
-        genome.fitness = 0
-        net = neat.nn.FeedForwardNetwork.create(genome, config)
-        game = SnakeGame()
+def eval_genome(genome, config):
+    net = neat.nn.FeedForwardNetwork.create(genome, config)
+    game = SnakeGame()
 
-        try:
-            score, length, distance_moved_towards_food = game.play_game(net)
+    score, length, distance_moved_towards_food, initial_angle, final_angle = game.play_game(net)
+    final_distance_to_food = abs(game.food_pos[0] - game.snake_pos[0]) + abs(game.food_pos[1] - game.snake_pos[1])
+    moves_made = game.move_limit - game.moves_without_food
 
-            print(f"Genome {genome_id}: Score={score}, Length={length}, Distance={distance_moved_towards_food}")
+    fitness = score * 100
+    fitness += length * 5
+    fitness += moves_made * 2
+    fitness += (moves_made // 5) * 10
 
-            fitness = max(0, score * 100)  # Nagroda za zdobycie punktu
-            fitness += max(0, (length - 1) * 100)  # Nagroda za długość węża
-            fitness -= max(0, distance_moved_towards_food * 0.1)  # Kara za oddalanie się od jedzenia
+    if game.is_collision():
+        fitness -= 250
 
-            last_moves = game.get_last_moves()
-            if len(set(last_moves)) < len(last_moves) / 2:
-                fitness -= 100  # Kara za powtarzające się ruchy
+    previous_distance_to_food = abs(game.food_pos[0] - game.snake_pos[0]) + abs(game.food_pos[1] - game.snake_pos[1])
+    if final_distance_to_food < previous_distance_to_food:
+        fitness += 10
 
-            if len(last_moves) > 10 and len(set(last_moves[-10:])) == 1:
-                fitness -= 500  # Kara za długo powtarzające się ruchy
+    if abs(final_angle) < abs(initial_angle):
+        fitness += 10
 
-            if length - 1 < score:
-                fitness -= 100  # Kara za przeżycie bez zdobycia punktu
-
-            genome.fitness = fitness
-        except Exception as e:
-            print(f"An error occurred while evaluating genome {genome_id}: {e}")
-            genome.fitness = 0
+    return fitness
 
 
 def run():
@@ -42,13 +37,19 @@ def run():
                          neat.DefaultSpeciesSet, neat.DefaultStagnation,
                          config_path)
 
-    pop = neat.Population(config)
+    try:
+        pop = neat.Checkpointer.restore_checkpoint('neat-checkpoint-58')
+    except FileNotFoundError:
+        print("Checkpoint not found. Starting a new population.")
+        pop = neat.Population(config)
+
     stats = neat.StatisticsReporter()
     pop.add_reporter(neat.StdOutReporter(True))
     pop.add_reporter(stats)
     pop.add_reporter(neat.Checkpointer(10))
 
-    winner = pop.run(eval_genomes, 50)
+    pe = neat.ParallelEvaluator(multiprocessing.cpu_count(), eval_genome)
+    winner = pop.run(pe.evaluate, 50)
     print('\nBest genome:\n{!s}'.format(winner))
 
     print("\n*** End of evolution statistics ***")

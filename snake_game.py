@@ -1,5 +1,7 @@
 import pygame
 import random
+import math
+
 
 pygame.init()
 
@@ -31,19 +33,36 @@ class SnakeGame:
 
         self.last_moves = []
         self.move_limit = 100
+        self.moves_without_food = 0
 
     def generate_food(self):
-        return [random.randrange(1, (self.window_width // self.snake_size)) * self.snake_size,
-                random.randrange(1, (self.window_height // self.snake_size)) * self.snake_size]
+        while True:
+            x = random.randrange(1, (self.window_width // self.snake_size)) * self.snake_size
+            y = random.randrange(1, (self.window_height // self.snake_size)) * self.snake_size
+            food_position = [x, y]
+            if food_position not in self.snake_body:
+                return food_position
+
+    def angle_with_food(self):
+        head_x, head_y = self.snake_pos
+        food_x, food_y = self.food_pos
+        delta_x = food_x - head_x
+        delta_y = food_y - head_y
+        angle = math.atan2(delta_y, delta_x)
+        return math.degrees(angle)
 
     def play_game(self, net):
         total_distance_moved_towards_food = 0
+        initial_angle = self.angle_with_food()
+        final_angle = initial_angle
 
         try:
             while True:
                 for event in pygame.event.get():
                     if event.type == pygame.QUIT:
-                        return self.score, len(self.snake_body), total_distance_moved_towards_food
+                        final_angle = self.angle_with_food()
+                        return self.score, len(
+                            self.snake_body), total_distance_moved_towards_food, initial_angle, final_angle
 
                 state = self.get_state()
                 action = net.activate(state)
@@ -56,18 +75,18 @@ class SnakeGame:
                     self.score += 1
                     self.food_pos = self.generate_food()
                     self.move_limit = 100
+                    self.moves_without_food = 0
                 else:
                     self.snake_body.pop()
                     self.move_limit -= 1
+                    self.moves_without_food += 1
 
-                if self.is_collision():
+                if self.is_collision() or self.move_limit == 0:
+                    final_angle = self.angle_with_food()
                     break
 
-                if self.move_limit == 0:
-                    break
-
-                current_distance_to_food = abs(
-                    self.food_pos[0] - self.snake_pos[0]) + abs(self.food_pos[1] - self.snake_pos[1])
+                current_distance_to_food = abs(self.food_pos[0] - self.snake_pos[0]) + abs(
+                    self.food_pos[1] - self.snake_pos[1])
                 total_distance_moved_towards_food += current_distance_to_food
 
                 self.game_window.fill(self.black)
@@ -75,12 +94,12 @@ class SnakeGame:
                 self.draw_food()
                 self.show_score()
                 pygame.display.update()
-                self.clock.tick(20)
+                self.clock.tick(100)
 
         except Exception as e:
             print(f"Exception occurred: {e}")
 
-        return self.score, len(self.snake_body), total_distance_moved_towards_food
+        return self.score, len(self.snake_body), total_distance_moved_towards_food, initial_angle, final_angle
 
     def select_action(self, output):
         suggested_direction = ['UP', 'RIGHT', 'DOWN', 'LEFT'][output.index(max(output))]
@@ -134,13 +153,13 @@ class SnakeGame:
     def get_state(self):
         head_x, head_y = self.snake_pos
 
-        dist_to_wall_up = head_y // self.snake_size
-        dist_to_wall_down = (self.window_height - head_y) // self.snake_size
-        dist_to_wall_left = head_x // self.snake_size
-        dist_to_wall_right = (self.window_width - head_x) // self.snake_size
+        dist_to_wall_up = (head_y / self.snake_size) / (self.window_height / self.snake_size)
+        dist_to_wall_down = ((self.window_height - head_y) / self.snake_size) / (self.window_height / self.snake_size)
+        dist_to_wall_left = (head_x / self.snake_size) / (self.window_width / self.snake_size)
+        dist_to_wall_right = ((self.window_width - head_x) / self.snake_size) / (self.window_width / self.snake_size)
 
-        food_dx = self.food_pos[0] - head_x
-        food_dy = self.food_pos[1] - head_y
+        food_dx = (self.food_pos[0] - head_x) / self.window_width
+        food_dy = (self.food_pos[1] - head_y) / self.window_height
 
         danger_up = (head_y - self.snake_size < 0 or [head_x, head_y - self.snake_size] in self.snake_body)
         danger_down = (head_y + self.snake_size >= self.window_height or [head_x,
@@ -149,10 +168,7 @@ class SnakeGame:
         danger_right = (head_x + self.snake_size >= self.window_width or [head_x + self.snake_size,
                                                                           head_y] in self.snake_body)
 
-        move_up = self.direction == 'UP'
-        move_right = self.direction == 'RIGHT'
-        move_down = self.direction == 'DOWN'
-        move_left = self.direction == 'LEFT'
+        angle = self.angle_with_food()
 
         return [
             food_dx,
@@ -161,14 +177,11 @@ class SnakeGame:
             danger_down,
             danger_left,
             danger_right,
-            move_up,
-            move_right,
-            move_down,
-            move_left,
             dist_to_wall_up,
             dist_to_wall_down,
             dist_to_wall_left,
-            dist_to_wall_right
+            dist_to_wall_right,
+            angle
         ]
 
     def process_events(self):
