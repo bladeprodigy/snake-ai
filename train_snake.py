@@ -16,9 +16,6 @@ def eval_genome(genome, config):
     fitness = score * 100
     fitness += length * 10
 
-    if distance_moved_towards_food > 0:
-        fitness += 200 / distance_moved_towards_food
-
     if game.is_collision():
         fitness -= 50 * (1 + score / 100)
     if game.move_limit == 0:
