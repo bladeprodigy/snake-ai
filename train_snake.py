@@ -1,36 +1,40 @@
 import multiprocessing
 import os
 import neat
+from visualize import plot_stats
+
 from snake_game import SnakeGame
 
 
 def eval_genome(genome, config):
     net = neat.nn.FeedForwardNetwork.create(genome, config)
-    game = SnakeGame()
+    game = SnakeGame(manual_mode=False)
 
     score, length, distance_moved_towards_food, initial_angle, final_angle = game.play_game(net)
-    final_distance_to_food = abs(game.food_pos[0] - game.snake_pos[0]) + abs(game.food_pos[1] - game.snake_pos[1])
-    moves_made = game.move_limit - game.moves_without_food
+    moves = game.move_limit - game.moves_without_food
 
     fitness = score * 100
-    fitness += length * 5
-    fitness += moves_made * 2
-    fitness += (moves_made // 5) * 10
+    fitness += length * 10
+
+    if distance_moved_towards_food > 0:
+        fitness += 200 / distance_moved_towards_food
 
     if game.is_collision():
-        fitness -= 250
+        fitness -= 50 * (1 + score / 100)
+    if game.move_limit == 0:
+        fitness -= 50 * (1 + score / 100)
 
-    previous_distance_to_food = abs(game.food_pos[0] - game.snake_pos[0]) + abs(game.food_pos[1] - game.snake_pos[1])
-    if final_distance_to_food < previous_distance_to_food:
-        fitness += 10
-
-    if abs(final_angle) < abs(initial_angle):
-        fitness += 10
+    fitness += moves * 0.1
 
     return fitness
 
 
 def run():
+    checkpoint_dir = 'checkpoints'
+
+    if not os.path.exists(checkpoint_dir):
+        os.makedirs(checkpoint_dir)
+
     local_dir = os.path.dirname(__file__)
     config_path = os.path.join(local_dir, 'config-feedforward.txt')
     config = neat.Config(neat.DefaultGenome, neat.DefaultReproduction,
@@ -38,7 +42,7 @@ def run():
                          config_path)
 
     try:
-        pop = neat.Checkpointer.restore_checkpoint('neat-checkpoint-58')
+        pop = neat.Checkpointer.restore_checkpoint('try2/neat-checkpoint-293')
     except FileNotFoundError:
         print("Checkpoint not found. Starting a new population.")
         pop = neat.Population(config)
@@ -46,20 +50,12 @@ def run():
     stats = neat.StatisticsReporter()
     pop.add_reporter(neat.StdOutReporter(True))
     pop.add_reporter(stats)
-    pop.add_reporter(neat.Checkpointer(10))
+    pop.add_reporter(neat.Checkpointer(5, filename_prefix=checkpoint_dir + '/neat-checkpoint-'))
 
     pe = neat.ParallelEvaluator(multiprocessing.cpu_count(), eval_genome)
-    winner = pop.run(pe.evaluate, 50)
-    print('\nBest genome:\n{!s}'.format(winner))
+    pop.run(pe.evaluate, 100)
 
-    print("\n*** End of evolution statistics ***")
-    print("\nAverage Fitness per generation:")
-    for gen, avg in enumerate(stats.get_fitness_mean()):
-        print(f"Generation {gen}: Average Fitness = {avg}")
-
-    print("\nBest Fitness per generation:")
-    for gen, best in enumerate(stats.get_fitness_stat(max)):
-        print(f"Generation {gen}: Best Fitness = {best}")
+    plot_stats(stats)
 
 
 if __name__ == '__main__':

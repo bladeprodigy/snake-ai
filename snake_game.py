@@ -2,14 +2,15 @@ import pygame
 import random
 import math
 
-
 pygame.init()
 
 
 class SnakeGame:
-    def __init__(self):
-        self.window_width = 800
-        self.window_height = 600
+    def __init__(self, manual_mode=False):
+        self.manual_mode = manual_mode
+
+        self.window_width = 400
+        self.window_height = 400
         self.game_window = pygame.display.set_mode((self.window_width, self.window_height))
         pygame.display.set_caption('Snake')
 
@@ -32,7 +33,7 @@ class SnakeGame:
         self.font = pygame.font.SysFont('arial', 25)
 
         self.last_moves = []
-        self.move_limit = 100
+        self.move_limit = 250
         self.moves_without_food = 0
 
     def generate_food(self):
@@ -74,7 +75,7 @@ class SnakeGame:
                 if self.snake_pos == self.food_pos:
                     self.score += 1
                     self.food_pos = self.generate_food()
-                    self.move_limit = 100
+                    self.move_limit = 250
                     self.moves_without_food = 0
                 else:
                     self.snake_body.pop()
@@ -94,7 +95,7 @@ class SnakeGame:
                 self.draw_food()
                 self.show_score()
                 pygame.display.update()
-                self.clock.tick(100)
+                self.clock.tick(25)
 
         except Exception as e:
             print(f"Exception occurred: {e}")
@@ -215,18 +216,97 @@ class SnakeGame:
         self.show_score()
         pygame.display.flip()
 
-    def run_game(self):
-        running = True
-        while running:
-            running = self.process_events()
-            self.update_game_state()
+    def reset_game(self):
+        self.snake_pos = [self.window_width // 2, self.window_height // 2]
+        self.snake_body = [self.snake_pos.copy()]
+        self.direction = None
+        self.change_to = self.direction
+        self.score = 0
+        self.food_pos = self.generate_food()
+        self.game_window.fill(self.black)
 
-            if self.is_collision():
-                print("Game Over! Your final score is: ", self.score)
+    def show_game_over(self):
+        self.game_window.fill(self.black)
+        game_over_text = self.font.render("Game Over! Final Score: " + str(self.score), True, self.white)
+        continue_text = self.font.render("Press any key to play again or ESC to exit.", True, self.white)
+        game_over_rect = game_over_text.get_rect(center=(self.window_width // 2, self.window_height // 2 - 20))
+        continue_rect = continue_text.get_rect(center=(self.window_width // 2, self.window_height // 2 + 20))
+
+        self.game_window.blit(game_over_text, game_over_rect)
+        self.game_window.blit(continue_text, continue_rect)
+        pygame.display.flip()
+
+    def select_difficulty(self):
+        difficulty_settings = {'Easy': 10, 'Medium': 25, 'Hard': 40}
+        selected_difficulty = 'Medium'
+
+        self.game_window.fill(self.black)
+        title_font = pygame.font.SysFont('arial', 35)
+        text_font = pygame.font.SysFont('arial', 25)
+
+        title = title_font.render('Select Difficulty:', True, self.white)
+        title_rect = title.get_rect(center=(self.window_width // 2, self.window_height // 3))
+
+        options = {i: (text_font.render(f"{d} (Press {i})", True, self.white), d)
+                   for i, d in enumerate(['Easy', 'Medium', 'Hard'], start=1)}
+
+        self.game_window.blit(title, title_rect)
+        for index, (text, diff) in options.items():
+            text_rect = text.get_rect(center=(self.window_width // 2, self.window_height // 3 + 50 * index))
+            self.game_window.blit(text, text_rect)
+
+        pygame.display.flip()
+
+        while True:
+            for event in pygame.event.get():
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_1:
+                        selected_difficulty = 'Easy'
+                    elif event.key == pygame.K_2:
+                        selected_difficulty = 'Medium'
+                    elif event.key == pygame.K_3:
+                        selected_difficulty = 'Hard'
+                    return difficulty_settings[selected_difficulty]
+                if event.type == pygame.QUIT:
+                    pygame.quit()
+                    exit()
+
+    @staticmethod
+    def ask_to_play_again():
+        while True:
+            for event in pygame.event.get():
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_ESCAPE:
+                        pygame.quit()
+                        exit()
+                    return True
+                if event.type == pygame.QUIT:
+                    pygame.quit()
+                    exit()
+
+    def run_game(self):
+        tick_rate = self.select_difficulty()
+
+        self.reset_game()
+        while True:
+            running = True
+            while running:
+                running = self.process_events()
+                self.update_game_state()
+                self.render_game()
+
+                if self.is_collision():
+                    self.show_game_over()
+                    if not self.ask_to_play_again():
+                        return
+                    self.reset_game()
+
+                self.clock.tick(tick_rate)
+
+            self.show_game_over()
+            if not self.ask_to_play_again():
                 break
 
-            self.render_game()
-            self.clock.tick(100)
+            pygame.time.delay(500)
 
-        pygame.time.delay(2000)
         pygame.quit()
