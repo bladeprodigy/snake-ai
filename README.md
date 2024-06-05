@@ -107,7 +107,7 @@ If you have any questions or feedback about this project, feel free to reach out
 
 ## 10. License and Authors
 
-This project is licensed under the MIT License.
+This project is licensed under the MIT License - see the `LICENSE` file for details.
 
 Authors:
 1. Aleks Gałęza
