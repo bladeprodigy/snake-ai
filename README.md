@@ -12,7 +12,17 @@ The goal of the project is to create an AI that can play the Snake game as well 
 
 The project is open-source, and contributions are welcome. If you have any suggestions or improvements, feel free to open an issue or submit a pull request.
 
-## 2. Project Setup
+## 2. Technologies
+
+The project is built using the following technologies:
+1. Python: A high-level, interpreted programming language that is widely used for general-purpose programming.
+2. Pygame: A set of Python modules designed for writing video games. It includes computer graphics and sound libraries that can be used to create games in Python.
+3. NEAT-Python: A Python implementation of the NEAT (NeuroEvolution of Augmenting Topologies) algorithm, which is a method for evolving artificial neural networks through genetic algorithms.
+4. NumPy: A Python library that provides support for large, multi-dimensional arrays and matrices, along with a collection of mathematical functions to operate on these arrays.
+5. Matplotlib: A Python library for creating static, animated, and interactive visualizations in Python.
+6. Graphiz: A graph visualization software that is used to visualize the neural network topology.
+
+## 3. Project Setup
 
 This project is built using Python and Pygame. To get started, you'll need to have Python installed on your machine. If you don't have Python installed, you can download it from the official website: https://www.python.org/downloads/
 
@@ -38,7 +48,7 @@ cd snake-ai
 pip install -r requirements.txt
 ```
 
-## 3. Manual Play Mode
+## 4. Manual Play Mode
 
 To play the game in manual play mode, run the following command:
 
@@ -48,7 +58,7 @@ python play_snake.py
 
 This will start the game in manual play mode, where you can control the snake using the arrow keys. The goal of the game is to eat the food that appears in the game area, without running into the walls or the snake's own tail.
 
-## 4. AI Learning Mode
+## 5. AI Learning Mode
 
 To play the game in AI learning mode, run the following command:
 
@@ -60,7 +70,7 @@ This will start the game in AI learning mode, where the snake is controlled by t
 
 Every 5 generations there is a checkpoint saved in the `checkpoints` folder. You can load a checkpoint by changing the name of the checkpoint in method run() in the `train_snake.py` file (line 45).
 
-## 5. Fitness Function
+## 6. Fitness Function
 
 The fitness function is used to evaluate the performance of each individual in the population. In this project, the fitness function is based on the following criteria:
 
@@ -73,11 +83,11 @@ The fitness function is used to evaluate the performance of each individual in t
 
 You can modify the fitness function eval_genomes() in the `train_snake.py` to experiment with different criteria and improve the performance of the AI.
 
-## 6. Configuration
+## 7. Configuration
 
 You can adjust setting in config-feedforward.txt file to suit your needs and ideas. It contains a lot of variables. You can find documentation explaining each variable in the `config-feedforward.txt` file here: https://neat-python.readthedocs.io/en/latest/index.html
 
-## 7. Running your trained AI
+## 8. Running your trained AI
 
 After training your AI, you can run it to see how well it performs in the game. To select which checkpoint you want to run change it in `run_best_genome.py` file (line 12).
 
@@ -89,13 +99,13 @@ python run_best_genome.py
 
 This will let your best genome play the game in a loop.
 
-## 8. Conclusion
+## 9. Conclusion
 
 This project is a fun and challenging way to learn about genetic algorithms and neural networks. By implementing an AI that learns to play the Snake game, you can gain a better understanding of how these algorithms work and how they can be applied to real-world problems.
 
 If you have any questions or feedback about this project, feel free to reach out to us. I'm always happy to help and learn from others.
 
-## 9. License and Authors
+## 10. License and Authors
 
 This project is licensed under the MIT License.
 
@@ -103,4 +113,3 @@ Authors:
 1. Aleks Gałęza
 2. Maciej Jankowski-Tomków
 3. Michał Turbiarz
-
