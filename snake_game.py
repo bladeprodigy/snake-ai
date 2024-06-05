@@ -9,8 +9,8 @@ class SnakeGame:
     def __init__(self, manual_mode=False):
         self.manual_mode = manual_mode
 
-        self.window_width = 400
-        self.window_height = 400
+        self.window_width = 600
+        self.window_height = 600
         self.game_window = pygame.display.set_mode((self.window_width, self.window_height))
         pygame.display.set_caption('Snake')
 
@@ -95,7 +95,7 @@ class SnakeGame:
                 self.draw_food()
                 self.show_score()
                 pygame.display.update()
-                self.clock.tick(25)
+                self.clock.tick(50)
 
         except Exception as e:
             print(f"Exception occurred: {e}")

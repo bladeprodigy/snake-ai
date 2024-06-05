@@ -14,14 +14,14 @@ def eval_genome(genome, config):
     moves = game.move_limit - game.moves_without_food
 
     fitness = score * 100
-    fitness += length * 10
+
+    fitness += moves
+    fitness -= game.moves_without_food * 0.5
 
     if game.is_collision():
-        fitness -= 50 * (1 + score / 100)
+        fitness -= 25 * (1 + score / 100)
     if game.move_limit == 0:
-        fitness -= 50 * (1 + score / 100)
-
-    fitness += moves * 0.1
+        fitness -= 25 * (1 + score / 100)
 
     return fitness
 
@@ -39,7 +39,7 @@ def run():
                          config_path)
 
     try:
-        pop = neat.Checkpointer.restore_checkpoint('try2/neat-checkpoint-293')
+        pop = neat.Checkpointer.restore_checkpoint('checkpoints/neat-checkpoint-399')
     except FileNotFoundError:
         print("Checkpoint not found. Starting a new population.")
         pop = neat.Population(config)
@@ -50,7 +50,7 @@ def run():
     pop.add_reporter(neat.Checkpointer(5, filename_prefix=checkpoint_dir + '/neat-checkpoint-'))
 
     pe = neat.ParallelEvaluator(multiprocessing.cpu_count(), eval_genome)
-    pop.run(pe.evaluate, 100)
+    pop.run(pe.evaluate, 50)
 
     plot_stats(stats)
 

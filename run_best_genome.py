@@ -23,7 +23,7 @@ def run_game_with_best_genome():
                 best_fitness = genome.fitness
         return checkpoint_best_genome
 
-    p = neat.Checkpointer.restore_checkpoint('try2/neat-checkpoint-293')
+    p = neat.Checkpointer.restore_checkpoint('checkpoints/neat-checkpoint-414')
     best_genome = find_best_genome(p.population)
 
     if not best_genome:

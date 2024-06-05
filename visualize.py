@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 
-def plot_stats(statistics, ylog=False, view=False, filename='avg_fitness.svg'):
+def plot_stats(statistics, ylog=False, view=False, filename='avg_fitness_stagnation.svg'):
     if plt is None:
         warnings.warn("This display is not available due to a missing optional dependency (matplotlib)")
         return
