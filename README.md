@@ -94,3 +94,13 @@ This will let your best genome play the game in a loop.
 This project is a fun and challenging way to learn about genetic algorithms and neural networks. By implementing an AI that learns to play the Snake game, you can gain a better understanding of how these algorithms work and how they can be applied to real-world problems.
 
 If you have any questions or feedback about this project, feel free to reach out to us. I'm always happy to help and learn from others.
+
+## 9. License and Authors
+
+This project is licensed under the MIT License.
+
+Authors:
+1. Aleks Gałęza
+2. Maciej Jankowski-Tomków
+3. Michał Turbiarz
+
